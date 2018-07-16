@@ -3,6 +3,7 @@ package com.salesapp;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Scanner;
 
 import com.salesapp.constant.AppConstant;
 import com.salesapp.message.Message;
@@ -15,23 +16,55 @@ import com.salesapp.sale.Sale;
 public class Application {
 
     static int totalValue = 0;
+	public static Map<String, ArrayList<Sale>> salesStore = new Hashtable<String, ArrayList<Sale>>();
 
     public static void main(String[] args) throws InterruptedException {
-    	Map<String, ArrayList<Sale>> salesStore = new Hashtable<String, ArrayList<Sale>>();
-		MessageProvider msgProvider = new ArrayMessageProvider();
-        for(int i = 1; i <= AppConstant.MAX_MSG_THRESHOLD_COUNT; i++){
-        	Message msg = getNextMessage(msgProvider.getMessageStr());
-        	ArrayList<Sale> sales = msg.createSale();
-        	processSales(sales, salesStore);
-        	if(i % AppConstant.REPORT_GENERATION_COUNT == 0){
-        		System.out.println("Intermediate Sales Report after "+ AppConstant.REPORT_GENERATION_COUNT + "messages....");
-        		printSalesReport(salesStore);
-        	}
-        }
-        System.out.println("SalesMessageProcessor application is pausing.......");
+		try{
+			if(args[0].equalsIgnoreCase(AppConstant.THIRDPARTY)){
+				processRealTimeMessages();
+			}else if(args[0].equalsIgnoreCase(AppConstant.RANDOMMSGTEST)){
+				processRandomMessages();
+			}else {
+				processRealTimeMessages();
+			}
+		}catch (ArrayIndexOutOfBoundsException ex){
+			System.out.println("Application is waiting for sales messages");
+			processRealTimeMessages();
+		}
+
+        System.out.println("Application is pausing as it reached max processing count........");
         printAdjustmentReport(salesStore);
         Thread.sleep(AppConstant.THREAD_SLEEP_TIME);
     }
+
+
+    private static void processRandomMessages(){
+		MessageProvider msgProvider = new ArrayMessageProvider();
+		for(int i = 1; i <= AppConstant.MAX_MSG_THRESHOLD_COUNT; i++){
+			Message msg = getNextMessage(msgProvider.getMessageStr());
+			ArrayList<Sale> sales = msg.createSale();
+			processSales(sales, salesStore);
+			if(i % AppConstant.REPORT_GENERATION_COUNT == 0){
+				System.out.println("Intermediate Sales Report after "+ AppConstant.REPORT_GENERATION_COUNT + "messages....");
+				printSalesReport(salesStore);
+			}
+		}
+	}
+
+	private static void processRealTimeMessages(){
+		Scanner in = new Scanner(System.in);
+		int msgCounter = 1;
+		while (msgCounter <= AppConstant.MAX_MSG_THRESHOLD_COUNT ){
+			Message msg = getNextMessage(in.nextLine());
+			ArrayList<Sale> sales = msg.createSale();
+			processSales(sales, salesStore);
+			if(msgCounter % AppConstant.REPORT_GENERATION_COUNT == 0){
+				System.out.println("Intermediate Sales Report after "+ AppConstant.REPORT_GENERATION_COUNT + "messages....");
+				printSalesReport(salesStore);
+			}
+			msgCounter++;
+		}
+	}
     
     public static Message getNextMessage(String msg){
     	MessageFactory msgFactory = new MessageFactory();

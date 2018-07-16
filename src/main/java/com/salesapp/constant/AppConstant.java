@@ -18,4 +18,7 @@ public interface AppConstant {
 
     public static final int THREAD_SLEEP_TIME = 6000;
 
+    public static final String RANDOMMSGTEST = "RANDOMMSG";
+    public static final String THIRDPARTY = "THIRDPARTY";
+
 }
